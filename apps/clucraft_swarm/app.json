@@ -1,0 +1,115 @@
+{
+  "id": "clucraft_swarm",
+  "title": "Swarm Drive",
+  "description": "An 8-bit arcade shooter for when you're parked: turn the iDrive controller to move the ship, fly it forward with the accelerator pedal, press the controller to fire. Runs only with the selector in P",
+  "version": "0.1.0",
+  "vendor": "custom",
+  "loggingId": "OAC7",
+  "mguHmi": [
+    "ID7"
+  ],
+  "requires": {
+    "idrive7-renderd": "2.1.18",
+    "mgu-inputgate": "1.1.0"
+  },
+  "signals": {
+    "de.bmw.infotainment.vehicle.Vehicle2": {
+      "statusCarSpeed2": "rs"
+    },
+    "de.bmw.infrastructure.VehicleInformation": {
+      "_optional": "the selector position: without it the game can't see P and won't run in a car",
+      "statusGearboxDrive": "s",
+      "DataPowerTrain2": "s"
+    },
+    "de.bmw.powertrain.AcceleratorPedal": {
+      "_optional": "the accelerator pedal: the ship stays in the back row",
+      "AngleAcceleratorPedal": "s"
+    },
+    "de.bmw.infotainment.controlelements.FrontCCU": {
+      "statusRotaryEncoderState": "rs"
+    }
+  },
+  "screens": [
+    {
+      "name": "MAIN",
+      "kind": "menu",
+      "title": "Swarm Drive",
+      "settings": true,
+      "items": [
+        ["button", "BTN_PLAY", "Play"],
+        ["button", "BTN_NEW", "New game"],
+        ["text", "MENU_INFO", ""]
+      ]
+    },
+    {
+      "name": "GAME",
+      "kind": "canvas",
+      "title": "Swarm Drive",
+      "chrome": false,
+      "buttons": [
+        ["BTN_FIRE", "Fire"]
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "key": "fire",
+      "label": "Guns",
+      "type": "choice",
+      "default": "knob",
+      "options": [
+        ["knob", "Press the controller (hold for rapid fire)"],
+        ["auto", "Fire by themselves"]
+      ]
+    },
+    {
+      "key": "knobStep",
+      "label": "Controller: how far a click moves the ship",
+      "type": "choice",
+      "default": "12",
+      "options": [
+        ["8", "A little (fine aim)"],
+        ["12", "Normal"],
+        ["16", "Further"],
+        ["24", "Far (few turns)"]
+      ]
+    },
+    {
+      "key": "knobDir",
+      "label": "Controller direction",
+      "type": "choice",
+      "default": "normal",
+      "options": [
+        ["normal", "Normal"],
+        ["reversed", "Reversed (the ship goes the wrong way)"]
+      ]
+    },
+    {
+      "key": "pedalTravel",
+      "label": "Pedal: travel for all the way forward",
+      "type": "choice",
+      "default": "50",
+      "options": [
+        ["25", "A quarter of the pedal"],
+        ["50", "Half the pedal"],
+        ["90", "The whole pedal"]
+      ]
+    },
+    {
+      "key": "ships",
+      "label": "Ships",
+      "type": "choice",
+      "default": "3",
+      "options": [
+        ["3", "3"],
+        ["5", "5"]
+      ]
+    },
+    {
+      "key": "panels",
+      "label": "Side panels (how to play, pedal gauge)",
+      "type": "bool",
+      "default": true
+    }
+  ]
+}

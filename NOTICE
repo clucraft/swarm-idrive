@@ -1,0 +1,28 @@
+Swarm Drive
+===========
+
+An arcade shooter for the BMW iDrive 7 (MGU) head unit. MIT licence (LICENSE).
+The game, its pixel art, its font and its name are original to this project.
+
+This repository contains, in kit/, a copy of part of
+
+    idrive7-apps, https://github.com/cauliflowermossgrape/idrive7-apps
+    Copyright (c) 2026 cauliflowermossgrape
+    Copyright (c) 2026 小白151 (GitHub: JackieZ123430), Chinese translation
+    MIT licence (kit/LICENSE)
+
+at the commit named in kit/UPSTREAM.json, unchanged: the build script, the app
+runtime it packs into the app, and the permissions template. The fonts in
+kit/runtime/fonts are under the SIL Open Font License 1.1 (the OFL-*.txt files
+beside them).
+
+patches/idrive7-apps holds changes to that project's emulator, applied to the
+submodule vendor/idrive7-apps on a developer's PC only (tools/setup.js).
+
+The kit's GPU renderer (mgu-render, GPL-3.0-or-later) and the emulator's build
+of its draw engine are not part of this repository's own files. They are in the
+submodule vendor/idrive7-apps, under their own licences, and run as their own
+programs.
+
+BMW's app SDK is not in this repository. This project is not affiliated with or
+endorsed by BMW AG. BMW and iDrive are trademarks of BMW AG.

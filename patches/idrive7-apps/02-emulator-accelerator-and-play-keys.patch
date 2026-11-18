@@ -1,0 +1,104 @@
+diff --git a/kit/emu/web/emu-app.js b/kit/emu/web/emu-app.js
+index 11acd62..b9c7428 100644
+--- a/kit/emu/web/emu-app.js
++++ b/kit/emu/web/emu-app.js
+@@ -247,6 +247,37 @@ document.addEventListener('keyup', (e) => {
+ });
+ window.addEventListener('blur', () => { send({ t: 'ccu', press: false }); send({ t: 'ccu', tilt: null }); });
+ 
++/* ---------------- keys for a game played with the knob and the accelerator ---------------- */
++// A / D held: the knob turns left / right, click after click. W held: the accelerator goes down (the Pedal signal,
++// Manual mode); let go, it comes back up.
++const play = { keys: new Set(), timer: null, t: 0, turn: 0 };
++const PLAY_KEYS = { a: 'left', d: 'right', w: 'pedal' };
++const TURN_RATE = 22, PEDAL_RATE = 320, PEDAL_BACK = 480;    // clicks / s, % / s
++function playTick() {
++  const now = performance.now(), dt = Math.min(0.1, (now - play.t) / 1000);
++  play.t = now;
++  const dir = (play.keys.has('right') ? 1 : 0) - (play.keys.has('left') ? 1 : 0);
++  if (dir) { play.turn += dir * TURN_RATE * dt; const n = Math.trunc(play.turn); if (n) { play.turn -= n; send({ t: 'ccu', turn: n }); } } else play.turn = 0;
++  const p = play.keys.has('pedal') ? Math.min(100, sig.v.pedal + PEDAL_RATE * dt) : Math.max(0, sig.v.pedal - PEDAL_BACK * dt);
++  if (Math.round(p) !== sig.v.pedal || play.keys.has('pedal')) {
++    sig.v.pedal = Math.round(p);
++    const r = $('#sig-pedal'); if (r) { r.value = sig.v.pedal; r._show(); }
++    manual();
++  }
++  if (!play.keys.size && !sig.v.pedal) { clearInterval(play.timer); play.timer = null; }
++}
++document.addEventListener('keydown', (e) => {
++  const k = PLAY_KEYS[String(e.key).toLowerCase()];
++  if (!k || typing(e) || S.closed) return;
++  e.preventDefault();
++  if (play.keys.has(k)) return;
++  play.keys.add(k);
++  if (k !== 'pedal') send({ t: 'ccu', turn: k === 'right' ? 1 : -1 });      // (a tap is one click)
++  if (!play.timer) { play.t = performance.now(); play.timer = setInterval(playTick, 33); }
++});
++document.addEventListener('keyup', (e) => { const k = PLAY_KEYS[String(e.key).toLowerCase()]; if (k) play.keys.delete(k); });
++window.addEventListener('blur', () => play.keys.clear());
++
+ /* ---------------- panel: app, HMI ---------------- */
+ function setStatus(s, text) {
+   S.status = s;
+@@ -350,9 +381,10 @@ function syncSettings() {
+ const SIG = [
+   ['rpm', 'Engine', 0, 9000, 50, 'rpm'], ['speed', 'Speed', 0, 320, 1, 'km/h'], ['coolant', 'Coolant', -20, 130, 1, '°C'], ['oil', 'Oil', -20, 150, 1, '°C'],
+   ['torque', 'Torque', 0, 900, 5, 'Nm'], ['gLong', 'g long', -1.5, 1.5, 0.01, 'g'], ['gLat', 'g lat', -1.5, 1.5, 0.01, 'g'],
++  ['pedal', 'Pedal', 0, 100, 1, '%'],
+ ];
+ const GEARS = ['P', 'R', 'N', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8'];
+-const sig = { mode: 'demo', v: { rpm: 900, speed: 0, coolant: 90, oil: 95, gear: 'P', gLong: 0, gLat: 0, torque: 40 } };
++const sig = { mode: 'demo', v: { rpm: 900, speed: 0, coolant: 90, oil: 95, gear: 'P', gLong: 0, gLat: 0, torque: 40, pedal: 0 } };
+ function buildSignals() {
+   const box = $('#sliders');
+   SIG.forEach(([k, label, min, max, step, unit]) => {
+diff --git a/kit/emu/web/index.html b/kit/emu/web/index.html
+index ad39da7..27f84b9 100644
+--- a/kit/emu/web/index.html
++++ b/kit/emu/web/index.html
+@@ -50,6 +50,8 @@
+     <span><kbd>Backspace</kbd> BACK</span>
+     <span><kbd>H</kbd> HOME</span>
+     <span><kbd>O</kbd> open the app</span>
++    <span><kbd>A</kbd> <kbd>D</kbd> turn (held)</span>
++    <span><kbd>W</kbd> accelerator</span>
+     <span>mouse = touch</span>
+   </div>
+ </main>
+diff --git a/kit/tools/emu.js b/kit/tools/emu.js
+index fb2414d..e2c2d70 100644
+--- a/kit/tools/emu.js
++++ b/kit/tools/emu.js
+@@ -37,7 +37,7 @@
+  *   {t:'touch', phase: 1|2|3, x, y}       screen px
+  *   {t:'ccu', turn: n} | {t:'ccu', press: bool} | {t:'ccu', tilt: 'N'|'E'|'S'|'W'|null}
+  *   {t:'hmi', a: 'back'|'home'|'open', screen}   {t:'click', id}  (an HMI button)
+- *   {t:'set', k, v}  {t:'sig', mode: 'demo'|'manual', v: {rpm, speed, coolant, oil, gear, gLong, gLat, torque}}
++ *   {t:'set', k, v}  {t:'sig', mode: 'demo'|'manual', v: {rpm, speed, coolant, oil, gear, gLong, gLat, torque, pedal}}
+  *   {t:'app', id}  {t:'restart'}
+  *   {t:'drop', why}                       the page's renderer dropped the client: the connection is closed
+  *   {t:'rerror', s}                       an error the renderer would send the app (ERROR)
+@@ -518,8 +518,8 @@ setInterval(() => {
+ }, 1000).unref();
+ 
+ /* ---------------- the page's messages ---------------- */
+-const Sig = { mode: 'demo', v: { rpm: 900, speed: 0, coolant: 90, oil: 95, gear: 'P', gLong: 0, gLat: 0, torque: 40 } };
+-const SIG_KEYS = ['rpm', 'speed', 'coolant', 'oil', 'gLong', 'gLat', 'torque'];
++const Sig = { mode: 'demo', v: { rpm: 900, speed: 0, coolant: 90, oil: 95, gear: 'P', gLong: 0, gLat: 0, torque: 40, pedal: 0 } };
++const SIG_KEYS = ['rpm', 'speed', 'coolant', 'oil', 'gLong', 'gLat', 'torque', 'pedal'];
+ function onPage(ws, m) {
+     switch (m.t) {
+     case 'tick': {
+diff --git a/kit/tools/hu-stub.js b/kit/tools/hu-stub.js
+index 59aa22d..d89f404 100644
+--- a/kit/tools/hu-stub.js
++++ b/kit/tools/hu-stub.js
+@@ -403,6 +403,8 @@ function runLive(stage, dataDir) {
+         hu.feed('de.bmw.infotainment.vehicle.CDS', 'statusEngineTemperature', { temperatureEngineDrive: raw('temp', v.coolant), temperatureEngineOilDrive: raw('temp', v.oil) });
+         hu.feed('de.bmw.infrastructure.VehicleInformation', 'statusGearboxDrive', { statusActualGearDrive: gear, statusActualStageDrive: /^D/.test(v.gear) ? 'D' : v.gear });
+         hu.feed('de.bmw.infotainment.drivingexcitement.FES', 'statusActualValueTorque2', { actualValueTorqueCrankshaft: raw('torque', v.torque) });
++        // the accelerator pedal (0.025 % a step, as apps/live_data reads it): for apps that take it as a control
++        if (isFinite(v.pedal)) hu.feed('de.bmw.powertrain.AcceleratorPedal', 'AngleAcceleratorPedal', { actualValueAngleAcceleratorPedal: Math.round(v.pedal / 0.025) });
+     }, 50);
+ 
+     process.on('message', (m) => {

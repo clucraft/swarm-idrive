@@ -1,0 +1,8 @@
+node_modules/
+# tools/node8.js downloads
+.cache/
+# car packages contain BMW's SDK: never commit or publish them
+dist/
+*.mgu
+# BMW's SDK, put here by the MGU Store's build on the head unit: never commit it
+/oap-sdk/

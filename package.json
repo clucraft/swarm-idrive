@@ -1,0 +1,16 @@
+{
+  "name": "swarm-idrive",
+  "version": "0.1.0",
+  "description": "Swarm Drive: an 8-bit arcade shooter for the BMW iDrive 7 (MGU) head unit, played with the iDrive controller and the accelerator pedal while parked",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "setup": "node tools/setup.js",
+    "emu": "node tools/emu.js",
+    "test": "node test/run.js",
+    "test:node8": "node tools/node8.js test/run.js",
+    "build:car": "node tools/build-car.js",
+    "sync:kit": "node tools/sync-kit.js",
+    "icon": "node tools/make-icon.js"
+  }
+}

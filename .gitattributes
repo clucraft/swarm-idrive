@@ -1,0 +1,4 @@
+# Unix line endings in the working tree on every OS: the build runs on the head unit, the patches are applied by git
+* text=auto eol=lf
+*.png binary
+*.patch text eol=lf

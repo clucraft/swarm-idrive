@@ -1,0 +1,3 @@
+[submodule "vendor/idrive7-apps"]
+	path = vendor/idrive7-apps
+	url = https://github.com/cauliflowermossgrape/idrive7-apps

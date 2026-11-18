@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/cauliflowermossgrape/idrive7-apps",
+  "commit": "673badb3e85e4b5b04f60be669f6210379c82538",
+  "paths": [
+    "kit/runtime",
+    "kit/platform",
+    "kit/tools/build.py",
+    "kit/tools/pack_data.py",
+    "kit/tools/localize.py",
+    "kit/tools/locale-revisions.json",
+    "kit/tools/oapgen"
+  ]
+}
